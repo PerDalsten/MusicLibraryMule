@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:json="http://www.mulesoft.org/schema/mule/json" xmlns:jms="http://www.mulesoft.org/schema/mule/jms" xmlns:file="http://www.mulesoft.org/schema/mule/file" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:spring="http://www.springframework.org/schema/beans" 
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-current.xsd
+http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/file/current/mule-file.xsd
+http://www.mulesoft.org/schema/mule/json http://www.mulesoft.org/schema/mule/json/current/mule-json.xsd
+http://www.mulesoft.org/schema/mule/jms http://www.mulesoft.org/schema/mule/jms/current/mule-jms.xsd">
+    <flow name="add_songFlow">
+        <file:inbound-endpoint connector-ref="File" responseTimeout="10000" doc:name="File" path="${file.dropin.dir}"/>
+        <file:outbound-endpoint path="${file.process.dir}" connector-ref="File" responseTimeout="10000" doc:name="File"/>
+        <logger message="Msg: #[message]" level="INFO" doc:name="Logger"/>
+        <custom-transformer class="dk.purplegreen.musiclibrary.mule.SongTransformer" doc:name="Java"/>
+        <json:object-to-json-transformer doc:name="Object to JSON"/>
+        <logger message="Pay: #[payload]" level="INFO" doc:name="Logger"/>
+        <jms:outbound-endpoint queue="MUSICLIBRARY.SONG" connector-ref="Active_MQ" doc:name="JMS"/>
+    </flow>
+</mule>

@@ -22,6 +22,6 @@ http://www.mulesoft.org/schema/mule/jms http://www.mulesoft.org/schema/mule/jms/
     </spring:beans>
     <context:property-placeholder properties-ref="configBean"/>
     <http:listener-config name="HTTP_Listener_Configuration" host="0.0.0.0" port="${http.port}" basePath="/musiclibrarymule" doc:name="HTTP Listener Configuration"/>
-    <file:connector name="File" autoDelete="true" streaming="true" validateConnections="true" doc:name="File"/>
+    <file:connector name="File" autoDelete="false" streaming="true" validateConnections="true" doc:name="File"/>
     <jms:activemq-connector name="Active_MQ" brokerURL="tcp://localhost:61616" validateConnections="true" doc:name="Active MQ"/>
 </mule>

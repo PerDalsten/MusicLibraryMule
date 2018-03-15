@@ -9,12 +9,16 @@ http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/fil
 http://www.mulesoft.org/schema/mule/json http://www.mulesoft.org/schema/mule/json/current/mule-json.xsd
 http://www.mulesoft.org/schema/mule/jms http://www.mulesoft.org/schema/mule/jms/current/mule-jms.xsd">
     <flow name="add_songFlow">
-        <file:inbound-endpoint connector-ref="File" responseTimeout="10000" doc:name="File" path="${file.dropin.dir}"/>
-        <file:outbound-endpoint path="${file.process.dir}" connector-ref="File" responseTimeout="10000" doc:name="File"/>
-        <logger message="Msg: #[message]" level="INFO" doc:name="Logger"/>
-        <custom-transformer class="dk.purplegreen.musiclibrary.mule.SongTransformer" doc:name="Java"/>
-        <json:object-to-json-transformer doc:name="Object to JSON"/>
-        <logger message="Pay: #[payload]" level="INFO" doc:name="Logger"/>
-        <jms:outbound-endpoint queue="MUSICLIBRARY.SONG" connector-ref="Active_MQ" doc:name="JMS"/>
+        <file:inbound-endpoint connector-ref="File" responseTimeout="10000" doc:name="MP3 file" path="${file.dropin.dir}"/>
+        <logger message="Received: #[message] " level="INFO" doc:name="Logger"/>
+        <set-variable variableName="mp3FileName" value="#[message.inboundProperties['originalDirectory']+'/'+message.inboundProperties['originalFilename']]" doc:name="Save MP3 filename"/>
+        <custom-transformer class="dk.purplegreen.musiclibrary.mule.SongTransformer" doc:name="Create song from MP3 tag"/>
+        <json:object-to-json-transformer doc:name="Song to JSON"/>
+        <logger message="Sending song to queue: #[payload]" level="INFO" doc:name="Logger"/>
+        <jms:outbound-endpoint queue="MUSICLIBRARY.SONG" connector-ref="Active_MQ" doc:name="Send to song queue"/>
+        <expression-component doc:name="Delete MP3 file"><![CDATA[mp3File=new File(flowVars.mp3FileName);
+
+if(mp3File.exists())
+  mp3File.delete();]]></expression-component>
     </flow>
 </mule>

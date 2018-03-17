@@ -16,9 +16,17 @@ http://www.mulesoft.org/schema/mule/jms http://www.mulesoft.org/schema/mule/jms/
         <json:object-to-json-transformer doc:name="Song to JSON"/>
         <logger message="Sending song to queue: #[payload]" level="INFO" doc:name="Logger"/>
         <jms:outbound-endpoint queue="MUSICLIBRARY.SONG" connector-ref="Active_MQ" doc:name="Send to song queue"/>
+        <flow-ref name="delete_MP3file_Flow" doc:name="Delete MP3 file"/>
+        <catch-exception-strategy doc:name="Catch Exception Strategy">
+            <logger message="Exception caught: #[exception]" level="INFO" doc:name="Logger"/>
+            <flow-ref name="delete_MP3file_Flow" doc:name="Delete MP3 file"/>
+        </catch-exception-strategy>
+    </flow>
+    <sub-flow name="delete_MP3file_Flow">
+        <logger message="Deleting file: #[flowVars.mp3FileName]" level="INFO" doc:name="Logger"/>
         <expression-component doc:name="Delete MP3 file"><![CDATA[mp3File=new File(flowVars.mp3FileName);
 
 if(mp3File.exists())
   mp3File.delete();]]></expression-component>
-    </flow>
+    </sub-flow>
 </mule>

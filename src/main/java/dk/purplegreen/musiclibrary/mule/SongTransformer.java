@@ -26,9 +26,6 @@ public class SongTransformer extends AbstractMessageTransformer {
 		public Integer disc;
 	}
 
-	@Value("${file.process.dir}")
-	private String dir;
-
 	@Override
 	public Object transformMessage(MuleMessage message, String outputEncoding) throws TransformerException {
 

@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:metadata="http://www.mulesoft.org/schema/mule/metadata"
+	xmlns:file="http://www.mulesoft.org/schema/mule/file" xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:spring="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-current.xsd
+http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/file/current/mule-file.xsd">
+	<flow name="music_library_exportFlow">
+		<http:listener config-ref="HTTP_Listener_Configuration"
+			path="/export" allowedMethods="GET" doc:name="HTTP" />
+		<http:request config-ref="HTTP_Request_Configuration"
+			path="/albums" method="GET" doc:name="HTTP" />
+		<file:outbound-endpoint path="${file.output.dir}"
+			outputPattern="albums.js" connector-ref="File" responseTimeout="10000"
+			doc:name="File" />
+		<set-variable variableName="jsFile" value="${file.output.dir}/albums.js"
+			doc:name="Variable" />
+		<parse-template location="templates/export.html"
+			doc:name="Parse Template" />
+		<message-properties-transformer doc:name="HTML">
+			<add-message-property key="Content-Type" value="text/html" />
+		</message-properties-transformer>
+	</flow>
+</mule>

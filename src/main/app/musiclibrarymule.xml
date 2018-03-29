@@ -27,4 +27,6 @@ http://www.mulesoft.org/schema/mule/jms http://www.mulesoft.org/schema/mule/jms/
     <file:connector name="File" autoDelete="false" streaming="true" validateConnections="true" doc:name="File"/>
     <jms:activemq-connector name="Active_MQ" brokerURL="${activemq.url}" validateConnections="true" doc:name="Active MQ"/>
     <mongo:config name="Mongo_DB" username="${mongodb.username}" database="musiclibrary" doc:name="Mongo DB" host="${mongodb.host}" port="${mongodb.port}"/>
+    <http:request-config name="HTTP_Request_Configuration" doc:name="HTTP Request Configuration" basePath="${musiclibraryservice.path}" host="${musiclibraryservice.host}" port="${musiclibraryservice.port}">
+    </http:request-config>
 </mule>

@@ -1,32 +1,57 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<mule xmlns:mongo="http://www.mulesoft.org/schema/mule/mongo"
-	xmlns:jms="http://www.mulesoft.org/schema/mule/jms" xmlns:file="http://www.mulesoft.org/schema/mule/file" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:context="http://www.springframework.org/schema/context" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
-	xmlns:spring="http://www.springframework.org/schema/beans" 
-	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://www.mulesoft.org/schema/mule/mongo http://www.mulesoft.org/schema/mule/mongo/current/mule-mongo.xsd
+<mule xmlns:ws="http://www.mulesoft.org/schema/mule/ws"
+	xmlns:mongo="http://www.mulesoft.org/schema/mule/mongo" xmlns:jms="http://www.mulesoft.org/schema/mule/jms"
+	xmlns:file="http://www.mulesoft.org/schema/mule/file" xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns:context="http://www.springframework.org/schema/context" xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:spring="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:mulexml="http://www.mulesoft.org/schema/mule/xml"
+	xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/ws http://www.mulesoft.org/schema/mule/ws/current/mule-ws.xsd http://www.mulesoft.org/schema/mule/mongo http://www.mulesoft.org/schema/mule/mongo/current/mule-mongo.xsd
 http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-current.xsd
 http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
 http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-current.xsd
 http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
 http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/file/current/mule-file.xsd
-http://www.mulesoft.org/schema/mule/jms http://www.mulesoft.org/schema/mule/jms/current/mule-jms.xsd">
-    <spring:beans>
-        <spring:bean id="configBean" name="ConfigBean" class="org.springframework.beans.factory.config.PropertiesFactoryBean">
-            <spring:property name="locations">
-                <spring:list value-type="org.springframework.core.io.Resource">                 
-                    <spring:value>classpath:musiclibrarymule.properties</spring:value>
-                    <spring:value>classpath:${mule.env:local}.properties</spring:value>
-                </spring:list>
-            </spring:property>
-            <spring:property name="ignoreResourceNotFound" value="true"/>
-        </spring:bean>
-    </spring:beans>
-    <context:property-placeholder properties-ref="configBean"/>
-    <http:listener-config name="HTTP_Listener_Configuration" host="0.0.0.0" port="${http.port}" basePath="/musiclibrarymule" doc:name="HTTP Listener Configuration"/>
-    <file:connector name="File" autoDelete="false" streaming="true" validateConnections="true" doc:name="File"/>
-    <jms:activemq-connector name="Active_MQ" brokerURL="${activemq.url}" validateConnections="true" doc:name="Active MQ"/>
-    <mongo:config name="Mongo_DB" username="${mongodb.username}" database="musiclibrary" doc:name="Mongo DB" host="${mongodb.host}" port="${mongodb.port}"/>
-    <http:request-config name="HTTP_Request_Configuration" doc:name="HTTP Request Configuration" basePath="${musiclibraryservice.path}" host="${musiclibraryservice.host}" port="${musiclibraryservice.port}">
-    </http:request-config>
+http://www.mulesoft.org/schema/mule/jms http://www.mulesoft.org/schema/mule/jms/current/mule-jms.xsd
+http://www.mulesoft.org/schema/mule/ws http://www.mulesoft.org/schema/mule/ws/current/mule-ws.xsd
+http://www.mulesoft.org/schema/mule/xml http://www.mulesoft.org/schema/mule/xml/current/mule-xml.xsd">
+	<spring:beans>
+		<spring:bean id="configBean" name="ConfigBean"
+			class="org.springframework.beans.factory.config.PropertiesFactoryBean">
+			<spring:property name="locations">
+				<spring:list value-type="org.springframework.core.io.Resource">
+					<spring:value>classpath:musiclibrarymule.properties</spring:value>
+					<spring:value>classpath:${mule.env:local}.properties</spring:value>
+				</spring:list>
+			</spring:property>
+			<spring:property name="ignoreResourceNotFound" value="true" />
+		</spring:bean>
+	</spring:beans>
+	<context:property-placeholder
+		properties-ref="configBean" />
+	<mulexml:namespace-manager
+		includeConfigNamespaces="true">
+		<mulexml:namespace prefix="soap" uri="http://schemas.xmlsoap.org/soap/envelope/"/>
+		<mulexml:namespace prefix="albumservice" uri="http://www.purplegreen.dk/albumservice" />
+		<mulexml:namespace prefix="albums" uri="http://www.purplegreen.dk/albums" />
+	</mulexml:namespace-manager>
+	<http:listener-config name="HTTP_Listener_Configuration"
+		host="0.0.0.0" port="${http.port}" basePath="/musiclibrarymule"
+		doc:name="HTTP Listener Configuration" />
+	<file:connector name="File" autoDelete="false"
+		streaming="true" validateConnections="true" doc:name="File" />
+	<jms:activemq-connector name="Active_MQ"
+		brokerURL="${activemq.url}" validateConnections="true" doc:name="Active MQ" />
+	<mongo:config name="Mongo_DB" username="${mongodb.username}"
+		database="musiclibrary" doc:name="Mongo DB" host="${mongodb.host}"
+		port="${mongodb.port}" />
+	<http:request-config name="HTTP_Request_Configuration"
+		doc:name="HTTP Request Configuration" basePath="${musiclibraryservice.path}"
+		host="${musiclibraryservice.host}" port="${musiclibraryservice.port}">
+	</http:request-config>
+	<ws:consumer-config name="Web_Service_Consumer"
+		wsdlLocation="wsdl/AlbumService.wsdl" service="AlbumService" port="AlbumServiceSOAP"
+		serviceAddress="${albumservice.endpoint}" doc:name="Web Service Consumer" />
 </mule>

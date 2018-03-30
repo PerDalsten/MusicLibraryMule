@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-
-<mule xmlns:mulexml="http://www.mulesoft.org/schema/mule/xml" xmlns:ws="http://www.mulesoft.org/schema/mule/ws" xmlns:metadata="http://www.mulesoft.org/schema/mule/metadata"
+<mule xmlns:mulexml="http://www.mulesoft.org/schema/mule/xml"
+	xmlns:ws="http://www.mulesoft.org/schema/mule/ws" xmlns:metadata="http://www.mulesoft.org/schema/mule/metadata"
 	xmlns:file="http://www.mulesoft.org/schema/mule/file" xmlns:http="http://www.mulesoft.org/schema/mule/http"
 	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
 	xmlns:spring="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
@@ -9,36 +9,42 @@ http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/cor
 http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
 http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/file/current/mule-file.xsd
 http://www.mulesoft.org/schema/mule/ws http://www.mulesoft.org/schema/mule/ws/current/mule-ws.xsd
-http://www.mulesoft.org/schema/mule/xml http://www.mulesoft.org/schema/mule/xml/current/mule-xml.xsd">    
+http://www.mulesoft.org/schema/mule/xml http://www.mulesoft.org/schema/mule/xml/current/mule-xml.xsd">
 	<flow name="music_library_exportFlow">
 		<http:listener config-ref="HTTP_Listener_Configuration"
 			path="/export" allowedMethods="GET" doc:name="HTTP" />
+		<flow-ref name="albumJSONSub_Flow" doc:name="Flow Reference" />
+		<flow-ref name="albumXMLSub_Flow" doc:name="Flow Reference" />
+
+		<parse-template location="templates/export.html"
+			doc:name="Parse Template" />
+		<message-properties-transformer
+			doc:name="HTML">
+			<add-message-property key="Content-Type" value="text/html" />
+		</message-properties-transformer>
+	</flow>
+	<sub-flow name="albumJSONSub_Flow">
 		<http:request config-ref="HTTP_Request_Configuration"
 			path="/albums" method="GET" doc:name="HTTP" />
 		<file:outbound-endpoint path="${file.output.dir}"
 			outputPattern="albums.js" connector-ref="File" responseTimeout="10000"
 			doc:name="File" />
-		<set-variable variableName="jsFile" value="${file.output.dir}/albums.js"
+		<set-variable variableName="jsonFile" value="${file.output.dir}/albums.js"
 			doc:name="Variable" />
-		<parse-template location="templates/export.html"
-			doc:name="Parse Template" />
-		<message-properties-transformer doc:name="HTML">
-			<add-message-property key="Content-Type" value="text/html" />
-		</message-properties-transformer>
-	</flow>
-    <flow name="music_library_exportFlow1">
-        <http:listener config-ref="HTTP_Listener_Configuration" path="/soaptest" allowedMethods="GET" doc:name="HTTP"/>
-        <ws:consumer config-ref="Web_Service_Consumer" operation="GetAlbums" doc:name="Web Service Consumer"/>
-        <logger message="PAYLOAD: #[payload]" level="INFO" doc:name="Logger"/>
-        <expression-transformer doc:name="Expression" expression="xpath3('/albumservice:GetAlbumsResponse/albums:albums',payload,'NODE')"/>
-        <logger message="PAYLOAD AFTER&quot; #[payload]" level="INFO" doc:name="Logger"/>
-        <mulexml:dom-to-xml-transformer doc:name="DOM to XML"/>
-        <mulexml:xslt-transformer xsl-file="xsl/remove_namespace.xsl" maxIdleTransformers="2" maxActiveTransformers="5" doc:name="XSLT"/>
-        <!-- 
-        <expression-transformer doc:name="Expression" expression="xpath3('/soap:Envelope/soap:Body/albumservice:GetAlbumsResponse/albums:albums')"/>
-         -->
-        <!--   -->
-        <file:outbound-endpoint path="${file.output.dir}" connector-ref="File" responseTimeout="10000" doc:name="File" outputPattern="albums.xml"/>
-       
-    </flow>
+	</sub-flow>
+	<sub-flow name="albumXMLSub_Flow">
+		<ws:consumer config-ref="Web_Service_Consumer" operation="GetAlbums"
+			doc:name="Web Service Consumer" />
+		<expression-transformer doc:name="Expression"
+			expression="xpath3('/albumservice:GetAlbumsResponse/albums:albums',payload,'NODE')" />
+		<mulexml:dom-to-xml-transformer
+			doc:name="DOM to XML" />
+		<mulexml:xslt-transformer xsl-file="xsl/remove_namespace.xsl"
+			maxIdleTransformers="2" maxActiveTransformers="5" doc:name="XSLT" />
+		<file:outbound-endpoint path="${file.output.dir}"
+			connector-ref="File" responseTimeout="10000" doc:name="File"
+			outputPattern="albums.xml" />
+		<set-variable variableName="xmlFile"
+			value="${file.output.dir}/albums.xml" doc:name="Variable" />
+	</sub-flow>
 </mule>

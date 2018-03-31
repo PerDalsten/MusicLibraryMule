@@ -13,38 +13,45 @@ http://www.mulesoft.org/schema/mule/xml http://www.mulesoft.org/schema/mule/xml/
 	<flow name="music_library_exportFlow">
 		<http:listener config-ref="HTTP_Listener_Configuration"
 			path="/export" allowedMethods="GET" doc:name="HTTP" />
-		<flow-ref name="albumJSONSub_Flow" doc:name="Flow Reference" />
-		<flow-ref name="albumXMLSub_Flow" doc:name="Flow Reference" />
-
+		<flow-ref name="albumJSONSub_Flow" doc:name="Export JSON" />
+		<flow-ref name="albumXMLSub_Flow" doc:name="Export XML" />
 		<parse-template location="templates/export.html"
-			doc:name="Parse Template" />
+			doc:name="Create response" />
 		<message-properties-transformer
 			doc:name="HTML">
 			<add-message-property key="Content-Type" value="text/html" />
 		</message-properties-transformer>
+		<catch-exception-strategy doc:name="Catch Exception Strategy">			
+			<parse-template location="templates/error.html"
+				doc:name="Create error response" />			
+			<message-properties-transformer
+				doc:name="HTML">
+				<add-message-property key="Content-Type" value="text/html" />
+			</message-properties-transformer>
+		</catch-exception-strategy>
 	</flow>
 	<sub-flow name="albumJSONSub_Flow">
 		<http:request config-ref="HTTP_Request_Configuration"
-			path="/albums" method="GET" doc:name="HTTP" />
+			path="/albums" method="GET" doc:name="Call albums REST" />
 		<file:outbound-endpoint path="${file.output.dir}"
 			outputPattern="albums.js" connector-ref="File" responseTimeout="10000"
-			doc:name="File" />
+			doc:name="Write JSON" />
 		<set-variable variableName="jsonFile" value="${file.output.dir}/albums.js"
-			doc:name="Variable" />
+			doc:name="Set output file" />
 	</sub-flow>
 	<sub-flow name="albumXMLSub_Flow">
 		<ws:consumer config-ref="Web_Service_Consumer" operation="GetAlbums"
-			doc:name="Web Service Consumer" />
-		<expression-transformer doc:name="Expression"
+			doc:name="Call AlbumService SOAP" />
+		<expression-transformer doc:name="Extract albums"
 			expression="xpath3('/albumservice:GetAlbumsResponse/albums:albums',payload,'NODE')" />
 		<mulexml:dom-to-xml-transformer
 			doc:name="DOM to XML" />
 		<mulexml:xslt-transformer xsl-file="xsl/remove_namespace.xsl"
-			maxIdleTransformers="2" maxActiveTransformers="5" doc:name="XSLT" />
+			maxIdleTransformers="2" maxActiveTransformers="5" doc:name="Remove namespace" />
 		<file:outbound-endpoint path="${file.output.dir}"
-			connector-ref="File" responseTimeout="10000" doc:name="File"
+			connector-ref="File" responseTimeout="10000" doc:name="Write XML"
 			outputPattern="albums.xml" />
 		<set-variable variableName="xmlFile"
-			value="${file.output.dir}/albums.xml" doc:name="Variable" />
+			value="${file.output.dir}/albums.xml" doc:name="Set output file" />
 	</sub-flow>
 </mule>

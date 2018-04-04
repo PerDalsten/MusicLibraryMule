@@ -1,8 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<mule xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:mongo="http://www.mulesoft.org/schema/mule/mongo" xmlns:metadata="http://www.mulesoft.org/schema/mule/metadata" xmlns:json="http://www.mulesoft.org/schema/mule/json" xmlns:jms="http://www.mulesoft.org/schema/mule/jms" xmlns:file="http://www.mulesoft.org/schema/mule/file" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
-	xmlns:spring="http://www.springframework.org/schema/beans" 
-	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+<mule xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns:mongo="http://www.mulesoft.org/schema/mule/mongo" xmlns:metadata="http://www.mulesoft.org/schema/mule/metadata"
+	xmlns:json="http://www.mulesoft.org/schema/mule/json" xmlns:jms="http://www.mulesoft.org/schema/mule/jms"
+	xmlns:file="http://www.mulesoft.org/schema/mule/file" xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:spring="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-current.xsd
 http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
 http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/file/current/mule-file.xsd
@@ -10,53 +13,122 @@ http://www.mulesoft.org/schema/mule/json http://www.mulesoft.org/schema/mule/jso
 http://www.mulesoft.org/schema/mule/jms http://www.mulesoft.org/schema/mule/jms/current/mule-jms.xsd
 http://www.mulesoft.org/schema/mule/mongo http://www.mulesoft.org/schema/mule/mongo/current/mule-mongo.xsd
 http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd">
-    <message-properties-transformer name="SetReplyTo" doc:name="Message Properties">
-        <add-message-property key="JMSReplyTo" value="MUSICLIBRARY.SONGSTATUS" />
-    </message-properties-transformer>    
-    <flow name="add_song_Flow">
-        <file:inbound-endpoint connector-ref="File" responseTimeout="10000" doc:name="MP3 file" path="${file.dropin.dir}"/>
-        <set-variable variableName="mp3FileName" value="#[message.inboundProperties['originalDirectory']+'/'+message.inboundProperties['originalFilename']]" doc:name="Save MP3 filename"/>
-        <custom-transformer class="dk.purplegreen.musiclibrary.mule.SongTransformer" doc:name="Create song from MP3 tag"/>
-        <json:object-to-json-transformer doc:name="Song to JSON"/>
-        <jms:outbound-endpoint queue="MUSICLIBRARY.SONG" connector-ref="Active_MQ" doc:name="Send to song queue" metadata:id="4a04e4ee-e15b-4b13-8fb2-a0cdee3c5990" transformer-refs="SetReplyTo"/>
-        <flow-ref name="delete_MP3file_Flow" doc:name="Delete MP3 file"/>
-        <flow-ref name="log_song_submitted_Flow" doc:name="Flow Reference"/>        
-        <catch-exception-strategy doc:name="Catch Exception Strategy">
-            <logger message="Exception caught: #[exception]" level="INFO" doc:name="Logger"/>
-            <flow-ref name="delete_MP3file_Flow" doc:name="Delete MP3 file"/>
-        </catch-exception-strategy>
-    </flow>
-    <sub-flow name="log_song_submitted_Flow">
-    	<json:json-to-object-transformer doc:name="JSON to Object" returnClass="java.util.Map"/>
-        <expression-transformer expression="#['{$set:{ &quot;title&quot;:&quot;'+payload.title+'&quot;,&quot;album&quot;:&quot;'+payload.album+'&quot;,&quot;artist&quot;:&quot;'+payload.artist+'&quot;}}']" doc:name="Expression"/>
-        <mongo:json-to-dbobject doc:name="Mongo DB"/>
-        <mongo:update-objects config-ref="Mongo_DB" collection="songs" query-ref="#[org.mule.module.mongo.MongoCloudConnector.jsonToDbobject('{&quot;_id&quot;:&quot;'+message.id+'&quot;}')]" multi="false" upsert="true" doc:name="Mongo DB"/>
-    </sub-flow>
-    <sub-flow name="delete_MP3file_Flow">
-        <logger message="Deleting file: #[flowVars.mp3FileName]" level="INFO" doc:name="Logger"/>
-        <expression-component doc:name="Delete MP3 file"><![CDATA[mp3File=new File(flowVars.mp3FileName);
+	<message-properties-transformer name="SetReplyTo"
+		doc:name="Message Properties">
+		<add-message-property key="JMSReplyTo"
+			value="MUSICLIBRARY.SONGSTATUS" />
+	</message-properties-transformer>
+	<flow name="add_song_Flow">
+		<file:inbound-endpoint connector-ref="File"
+			responseTimeout="10000" doc:name="MP3 file" path="${file.dropin.dir}" />
+		<set-variable variableName="mp3FileName"
+			value="#[message.inboundProperties['originalDirectory']+'/'+message.inboundProperties['originalFilename']]"
+			doc:name="Save MP3 filename" />
+		<custom-transformer class="dk.purplegreen.musiclibrary.mule.SongTransformer"
+			doc:name="Create song from MP3 tag" />
+		<json:object-to-json-transformer
+			doc:name="Song to JSON" />
+		<jms:outbound-endpoint queue="MUSICLIBRARY.SONG"
+			connector-ref="Active_MQ" doc:name="Send to song queue"
+			metadata:id="4a04e4ee-e15b-4b13-8fb2-a0cdee3c5990" transformer-refs="SetReplyTo" />
+		<flow-ref name="delete_MP3file_Flow" doc:name="Delete MP3 file" />
+		<flow-ref name="log_song_submitted_Flow" doc:name="Log song submitted" />
+		<catch-exception-strategy doc:name="Catch Exception Strategy">
+			<logger message="Exception caught: #[exception]" level="INFO"
+				doc:name="Logger" />
+			<flow-ref name="delete_MP3file_Flow" doc:name="Delete MP3 file" />
+		</catch-exception-strategy>
+	</flow>
+	<sub-flow name="log_song_submitted_Flow">
+		<json:json-to-object-transformer
+			doc:name="JSON to Object" returnClass="java.util.Map" />
+		<expression-transformer
+			expression="#['{$set:{ &quot;title&quot;:&quot;'+payload.title+'&quot;,&quot;album&quot;:&quot;'+payload.album+'&quot;,&quot;artist&quot;:&quot;'+payload.artist+'&quot;}}']"
+			doc:name="Expression" />
+		<mongo:json-to-dbobject doc:name="Mongo DB" />
+		<mongo:update-objects config-ref="Mongo_DB"
+			collection="songs"
+			query-ref="#[org.mule.module.mongo.MongoCloudConnector.jsonToDbobject('{&quot;_id&quot;:&quot;'+message.id+'&quot;}')]"
+			multi="false" upsert="true" doc:name="Mongo DB" />
+	</sub-flow>
+	<sub-flow name="delete_MP3file_Flow">
+		<logger message="Deleting file: #[flowVars.mp3FileName]" level="INFO"
+			doc:name="Logger" />
+		<expression-component doc:name="Delete MP3 file"><![CDATA[mp3File=new File(flowVars.mp3FileName);
 if(mp3File.exists())
   mp3File.delete();]]></expression-component>
-    </sub-flow>
-    <flow name="log_song_created_Flow">
-        <jms:inbound-endpoint queue="MUSICLIBRARY.SONGSTATUS" connector-ref="Active_MQ" doc:name="JMS"/>
-        <json:json-to-object-transformer doc:name="JSON to Object" returnClass="java.util.Map"/>
-        <expression-transformer expression="#['{$set:{ &quot;id&quot;:&quot;'+payload.id+'&quot;}}']" doc:name="Expression" returnClass="java.lang.String"/>
-        <mongo:json-to-dbobject doc:name="Mongo DB"/>
-        <mongo:update-objects config-ref="Mongo_DB" collection="songs" query-ref="#[org.mule.module.mongo.MongoCloudConnector.jsonToDbobject('{&quot;_id&quot;:&quot;'+message.inboundProperties.JMSCorrelationID+'&quot;}')]" multi="false" upsert="true" doc:name="Mongo DB"/>
-        <catch-exception-strategy doc:name="Catch Exception Strategy">
-            <logger message="Error receiving song created message" level="INFO" doc:name="Logger"/>
-        </catch-exception-strategy>
-    </flow>
-    <flow name="song_log_Flow">
-        <http:listener config-ref="HTTP_Listener_Configuration" path="/log" doc:name="HTTP">
-            <http:response-builder>
-                <http:header headerName="Content-Type" value="application/json;charset=UTF-8"/>
-            </http:response-builder>
-        </http:listener>
-        <mongo:find-objects config-ref="Mongo_DB" collection="songs" doc:name="Mongo DB"/>
-        <response>
-            <mongo:mongo-collection-to-json doc:name="Mongo DB"/>
-        </response>
-    </flow>
+	</sub-flow>
+	<flow name="log_song_created_Flow">
+		<jms:inbound-endpoint queue="MUSICLIBRARY.SONGSTATUS"
+			connector-ref="Active_MQ" doc:name="JMS" />
+		<json:json-to-object-transformer
+			doc:name="JSON to Object" returnClass="java.util.Map" />
+		<expression-transformer
+			expression="#['{$set:{ &quot;id&quot;:&quot;'+payload.id+'&quot;}}']"
+			doc:name="Expression" returnClass="java.lang.String" />
+		<mongo:json-to-dbobject doc:name="Mongo DB" />
+		<mongo:update-objects config-ref="Mongo_DB"
+			collection="songs"
+			query-ref="#[org.mule.module.mongo.MongoCloudConnector.jsonToDbobject('{&quot;_id&quot;:&quot;'+message.inboundProperties.JMSCorrelationID+'&quot;}')]"
+			multi="false" upsert="true" doc:name="Mongo DB" />
+		<catch-exception-strategy doc:name="Catch Exception Strategy">
+			<logger message="Error receiving song created message: #[exception]"
+				level="INFO" doc:name="Logger" />
+		</catch-exception-strategy>
+	</flow>
+	<flow name="song_log_Flow">
+		<http:listener config-ref="HTTP_Listener_Configuration"
+			path="/log" doc:name="HTTP">
+		</http:listener>
+		<mongo:find-objects config-ref="Mongo_DB"
+			collection="songs" doc:name="Mongo DB" />
+		<mongo:mongo-collection-to-json
+			doc:name="Mongo DB" />
+		<message-properties-transformer
+			doc:name="JSON">
+			<add-message-property key="Content-Type"
+				value="application/json;charset=UTF-8" />
+		</message-properties-transformer>
+		<catch-exception-strategy doc:name="Catch Exception Strategy">
+			<logger message="Error reading logs: #[exception]" level="INFO"
+				doc:name="Logger" />
+			<set-property propertyName="http.status" value="500"
+				doc:name="Property" />
+			<set-property propertyName="http.reason" value="Failed to clear logs"
+				doc:name="Property" />
+			<set-payload value="Error reading logs: #[exception]"
+				doc:name="Set Payload" />
+			<message-properties-transformer
+				doc:name="Text">
+				<add-message-property key="Content-Type" value="text/plain" />
+			</message-properties-transformer>
+		</catch-exception-strategy>
+	</flow>
+	<flow name="song_clear_logFlow">
+		<http:listener config-ref="HTTP_Listener_Configuration"
+			path="/clearlog" doc:name="HTTP" />
+		<set-payload value="#['{}']" doc:name="Set Payload Query" />
+		<mongo:json-to-dbobject doc:name="Mongo DB" />
+		<mongo:remove-objects config-ref="Mongo_DB"
+			collection="songs" doc:name="Mongo DB" />
+        <set-payload value="#['[]']" doc:name="Set Payload Empty Doc"/>
+		<message-properties-transformer
+			doc:name="JSON">
+			<add-message-property key="Content-Type" value="application/json" />
+		</message-properties-transformer>
+		<catch-exception-strategy doc:name="Catch Exception Strategy">
+			<logger message="Error clearing logs: #[exception]" level="INFO"
+				doc:name="Logger" />
+			<set-property propertyName="http.status" value="500"
+				doc:name="Property" />
+			<set-property propertyName="http.reason" value="Failed to clear logs"
+				doc:name="Property" />
+			<set-payload value="Error clearing logs: #[exception]"
+				doc:name="Set Payload" />
+			<message-properties-transformer
+				doc:name="Text">
+				<add-message-property key="Content-Type" value="text/plain" />
+			</message-properties-transformer>
+		</catch-exception-strategy>
+	</flow>
 </mule>

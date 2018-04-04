@@ -23,3 +23,4 @@ MP3 files must be writable before copying to dropin folder.
 Log:
 
 http://localhost:8081/musiclibrarymule/log
+http://localhost:8081/musiclibrarymule/clearlog

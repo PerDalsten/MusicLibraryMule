@@ -20,6 +20,11 @@ or run mule -M-Denv=envname
 MP3 files must be writable before copying to dropin folder.
 
 
+Export:
+
+http://localhost:8081/musiclibrarymule/export
+
+
 Log:
 
 http://localhost:8081/musiclibrarymule/log

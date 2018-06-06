@@ -14,7 +14,7 @@
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 		<mule.version>3.9.0</mule.version>
 		<mule.tools.version>1.2</mule.tools.version>
-		<mp3agic.version>0.9.0</mp3agic.version>
+		<mp3agic.version>0.9.1</mp3agic.version>
 		<activemq.version>5.15.3</activemq.version>
 	</properties>
 

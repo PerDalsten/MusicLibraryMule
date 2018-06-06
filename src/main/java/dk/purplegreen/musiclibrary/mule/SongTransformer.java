@@ -8,7 +8,6 @@ import org.apache.log4j.Logger;
 import org.mule.api.MuleMessage;
 import org.mule.api.transformer.TransformerException;
 import org.mule.transformer.AbstractMessageTransformer;
-import org.springframework.beans.factory.annotation.Value;
 
 import com.mpatric.mp3agic.ID3v2;
 import com.mpatric.mp3agic.Mp3File;
@@ -34,8 +33,6 @@ public class SongTransformer extends AbstractMessageTransformer {
 		try {
 
 			if (InputStream.class.isInstance(message.getPayload())) {
-
-				log.debug("Closing input stream");
 				((InputStream) message.getPayload()).close();
 			}
 

@@ -41,10 +41,12 @@ http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/htt
 	</flow>
 	<sub-flow name="log_song_submitted_Flow">
 		<json:json-to-object-transformer
-			doc:name="JSON to Object" returnClass="java.util.Map" />
+			doc:name="JSON to Object" returnClass="java.lang.Object" />
+        <expression-transformer doc:name="Select values" expression="#[['artist':payload.artist,'album':payload.album,'title':payload.title]]"/>
+        <json:object-to-json-transformer doc:name="Object to JSON"/>
 		<expression-transformer
-			expression="#['{$set:{ &quot;title&quot;:&quot;'+payload.title+'&quot;,&quot;album&quot;:&quot;'+payload.album+'&quot;,&quot;artist&quot;:&quot;'+payload.artist+'&quot;}}']"
-			doc:name="Expression" />
+			expression="#['{$set:'+payload+'}']"
+			doc:name="Create query" />
 		<mongo:json-to-dbobject doc:name="Mongo DB" />
 		<mongo:update-objects config-ref="Mongo_DB"
 			collection="songs"

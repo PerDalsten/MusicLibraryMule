@@ -5,7 +5,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>dk.purplegreen</groupId>
 	<artifactId>MusicLibraryMule</artifactId>
-	<version>1.2.4-SNAPSHOT</version>
+	<version>1.2.4</version>
 	<packaging>mule</packaging>
 	<name>Mule MusicLibraryMule Application</name>
 
